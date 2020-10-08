@@ -1,0 +1,9 @@
+{% extends 'upload/base.html' %}
+
+{%block content%}
+    <div class="post">
+        <h3>{{ img_info.title }}</h3>
+        <p>{{ img_info.image|linebreaksbr}}</p>
+        <img src= '{{img_info.image.url}}' width='100px'>
+    </div>
+{%endblock%}

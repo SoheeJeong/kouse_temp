@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CrawlingData
+from .models import CrawlingData,Image
 
 # Register your models here.
 # 출력할 ResourceAdmin 클래스를 만든다
@@ -8,3 +8,4 @@ class CrawlingDataAdmin(admin.ModelAdmin):
 
 admin.site.register(CrawlingData,CrawlingDataAdmin)
 
+admin.site.register(Image)

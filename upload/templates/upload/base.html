@@ -1,0 +1,21 @@
+{% load static %}
+<html>
+    <head>
+        <title>Crawling Data</title>
+        <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lobster&subset=latin,latin-ext" type="text/css">
+    </head>
+    <body>
+        <div class = "page-header">
+            <a href="{% url 'img_upload' %}" class="top-menu">image upload</a>
+            <a href="/">Crawling Data List</a>
+        </div>
+        <div class="content container">
+            <div class="row">
+                <div class="col-md-8">
+                {% block content %}
+                {% endblock %}
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
