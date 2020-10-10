@@ -8,14 +8,23 @@
     </div>
     <div>
         <p>유사색 추천 결과: {{ analog|linebreaksbr}}</p>
-        <p>보색 추천 결과: {{ comp|linebreaksbr}}</p>
-        <p>단색 추천 결과: {{ mono|linebreaksbr}}</p>
         <p>유사색 추천 이미지:
             {% for imgurl in analogimg %}
                 <img src= {{imgurl}} width='100px'>
             {% endfor %}
         </p>
-       
+        <p>보색 추천 결과: {{ comp|linebreaksbr}}</p>
+        <p>보색 추천 이미지:
+            {% for imgurl in compimg %}
+                <img src= {{imgurl}} width='100px'>
+            {% endfor %}
+        </p>
+        <p>단색 추천 결과: {{ mono|linebreaksbr}}</p>
+        <p>유사색 추천 이미지:
+            {% for imgurl in monoimg %}
+                <img src= {{imgurl}} width='100px'>
+            {% endfor %}
+        </p>
     </div>
     
 {%endblock%}

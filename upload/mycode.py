@@ -9,6 +9,7 @@ import colorsys
 import os
 from io import BytesIO
 from django.contrib.sites import requests
+from iteration_utilities import unique_everseen
 
 class GetImageColor():
     def __init__(self,imgurl): 
@@ -53,8 +54,7 @@ class Recommendation():
                 h=int(h)
                 s=int(s)
                 v=int(v)
-                print('h,s,v:',h,s,v)
-
+                print('h,s,v:',h,s,v) #여기 왜 두번나옴?
                 '''
                 비슷한 색감의 명화 추천
                 # roomcolor_analog(비슷한 색감) : h는 +-30도(!=0) (AND) s는동일 v는 +-5 
@@ -70,20 +70,23 @@ class Recommendation():
                     roomcolor_analog, roomcolor_compl, roomcolor_mono= self.case1(df,h,s,v)
                 elif i==2:
                     roomcolor_analog, roomcolor_compl, roomcolor_mono= self.case2(df,h,s,v)
-                elif i==3:
+                else:
                     roomcolor_analog, roomcolor_compl, roomcolor_mono= self.case3(df,h,s,v)
                 
                 for j in roomcolor_analog:
-                    df_analog['title'].append(df[j].title) #유사색-추천받은 명화 '제목' list형식으로 append
-                    df_analog['imageurl'].append(df[j].imageurl)
+                    if df[j].title not in df_analog['title']: #중복 제거 위한 if문
+                        df_analog['title'].append(df[j].title) #유사색-추천받은 명화 '제목' list형식으로 append
+                        df_analog['imageurl'].append(df[j].imageurl)
                     # print("analog: ",df[j].title,"\n")
                 for j in roomcolor_compl:
-                    df_compl['title'].append(df[j].title)  #보색-추천받은 명화 '제목' list형식으로 append
-                    df_compl['imageurl'].append(df[j].imageurl) 
+                    if df[j].title not in df_compl['title']: #중복 제거 위한 if문
+                        df_compl['title'].append(df[j].title)  #보색-추천받은 명화 '제목' list형식으로 append
+                        df_compl['imageurl'].append(df[j].imageurl) 
                     # print("compl: ",df[j].title,"\n")
                 for j in roomcolor_mono:
-                    df_mono['title'].append(df[j].title)  #단색-추천받은 명화 '제목' list형식으로 append
-                    df_mono['imageurl'].append(df[j].imageurl) 
+                    if df[j].title not in df_mono['title']: #중복 제거 위한 if문
+                        df_mono['title'].append(df[j].title)  #단색-추천받은 명화 '제목' list형식으로 append
+                        df_mono['imageurl'].append(df[j].imageurl) 
                     # print("mono: ",df[j].title,"\n")
         return df_analog,df_compl,df_mono
 

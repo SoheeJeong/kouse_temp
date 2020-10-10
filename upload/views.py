@@ -34,8 +34,8 @@ def comp_result(request,pk):
     temp1 = GetImageColor(image_uploaded.image.url)
     clt = temp1.getClt() #room color clt
     
-    temp2 = Recommendation(clt,df)
-    analog,comp,mono = temp2.recommend() #recommended images list
+    # temp2 = Recommendation(clt,df)
+    analog,comp,mono = Recommendation(clt,df).recommend() #recommended images list
     # analog_imgs = temp2.analog_result(analog,comp,mono) #show recommended images
     return render(request,'upload/comp_result.html',{'img_info':image_uploaded,'analog':analog,'comp':comp,'mono':mono,
                             'analogimg':analog['imageurl'],'compimg':comp['imageurl'],'monoimg':mono['imageurl']})
