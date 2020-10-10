@@ -4,7 +4,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from .models import CrawlingData, Image
 from .forms import CrawlingDataForm, ImageForm
-from .mycode import MyClass,GetImageColor, Recommendation
+from .mycode import GetImageColor, Recommendation
 
 # Create your views here.
 #show crawling_data table info list
@@ -29,6 +29,13 @@ def img_upload(request):
 
 def comp_result(request,pk):
     image_uploaded = get_object_or_404(Image,pk=pk) #방금 업로드한 이미지의 pk에 맞는애의 name
-    print(image_uploaded.image.url)
-    # GetImageColor.getClt(image_uploaded.image.url)
-    return render(request,'upload/comp_result.html',{'img_info':image_uploaded})
+    df = CrawlingData.objects.all()
+
+    temp1 = GetImageColor(image_uploaded.image.url)
+    clt = temp1.getClt() #room color clt
+    
+    temp2 = Recommendation(clt,df)
+    analog,comp,mono = temp2.recommend() #recommended images list
+    # analog_imgs = temp2.analog_result(analog,comp,mono) #show recommended images
+    return render(request,'upload/comp_result.html',{'img_info':image_uploaded,'analog':analog,'comp':comp,'mono':mono,
+                            'analogimg':analog['imageurl'],'compimg':comp['imageurl'],'monoimg':mono['imageurl']})
