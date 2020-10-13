@@ -5,10 +5,8 @@
         <div class="post">
             <h3>{{ pic_info.artist }}</h3>
             <p>{{ pic_info.title|linebreaksbr}}</p>
-            <p>{{ pic_info.h1}}</p>
-            <p>{{ pic_info.s1}}</p>
-            <p>{{ pic_info.v1}}</p>
-            <p>{{ pic_info.imageurl}}</p>
+            <p>h1:{{ pic_info.h1}} s1:{{ pic_info.s1}} v1:{{ pic_info.v1}}</p>
+            <img src= {{pic_info.imageurl}} width='100px'>
         </div>
     {% endfor %}
 {%endblock%}

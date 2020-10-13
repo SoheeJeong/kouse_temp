@@ -4,27 +4,24 @@
     <div class="post">
         <h3>{{ img_info.title }}</h3>
         <p>{{ img_info.image|linebreaksbr}}</p>
-        <img src= '{{img_info.image.url}}' width='100px'>
+        <img src = '{{img_info.image.url}}' width='300px'>
+        <img src = '{{color_info}}' width='300px'>
     </div>
     <div>
-        <p>유사색 추천 결과: {{ analog|linebreaksbr}}</p>
-        <p>유사색 추천 이미지:
+        <p>유사색 추천 결과 이미지: <br/>
             {% for imgurl in analogimg %}
                 <img src= {{imgurl}} width='100px'>
             {% endfor %}
         </p>
-        <p>보색 추천 결과: {{ comp|linebreaksbr}}</p>
-        <p>보색 추천 이미지:
+        <p>보색 추천 결과 이미지: <br/>
             {% for imgurl in compimg %}
                 <img src= {{imgurl}} width='100px'>
             {% endfor %}
         </p>
-        <p>단색 추천 결과: {{ mono|linebreaksbr}}</p>
-        <p>유사색 추천 이미지:
+        <p>단색 추천 결과 이미지: <br/>
             {% for imgurl in monoimg %}
                 <img src= {{imgurl}} width='100px'>
             {% endfor %}
         </p>
     </div>
-    
 {%endblock%}

@@ -9,7 +9,6 @@ import colorsys
 import os
 from io import BytesIO
 from django.contrib.sites import requests
-from iteration_utilities import unique_everseen
 
 class GetImageColor():
     def __init__(self,imgurl): 
@@ -25,9 +24,31 @@ class GetImageColor():
         k = 5
         clt = KMeans(n_clusters = k)
         clt.fit(image)
-        print(image.shape)
-        
+        # print(image.shape)
+        self.centeroid_histogram(clt)
         return clt
+
+    def centeroid_histogram(self,clt):
+        numLabels = np.arange(0, len(np.unique(clt.labels_)) + 1)
+        (hist, _) = np.histogram(clt.labels_, bins=numLabels)
+        hist = hist.astype("float")
+        hist /= hist.sum()
+        # print(hist)
+        self.plot_colors(hist,clt.cluster_centers_)
+        return hist
+
+    def plot_colors(self, hist, centroids):
+        bar = np.zeros((50, 300, 3), dtype="uint8")
+        startX = 0
+        for (percent, color) in zip(hist, centroids):
+            endX = startX + (percent * 300)
+            cv2.rectangle(bar, (int(startX), 0), (int(endX), 50),color.astype("uint8").tolist(), -1)
+            startX = endX
+        plt.figure()
+        plt.axis('on')
+        plt.imshow(bar)
+        plt.savefig('./media/images/tempplot.png')
+        return bar
 
 class Recommendation():
     def __init__(self,clt,df):
@@ -54,7 +75,6 @@ class Recommendation():
                 h=int(h)
                 s=int(s)
                 v=int(v)
-                print('h,s,v:',h,s,v) #여기 왜 두번나옴?
                 '''
                 비슷한 색감의 명화 추천
                 # roomcolor_analog(비슷한 색감) : h는 +-30도(!=0) (AND) s는동일 v는 +-5 
