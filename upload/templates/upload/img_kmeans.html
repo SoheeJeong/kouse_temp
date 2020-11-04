@@ -1,0 +1,9 @@
+{% extends 'upload/base.html' %}
+
+{%block content%}
+    {% if img_obj %}
+        <img src="{{ img_obj.image.url}}" alt="connect" style="max-height:300px">
+        <h3>kmeans result</h3>
+        <img src="{{color_info}}" alt="kmeans" style="max-height:300px">
+    {% endif %}
+{%endblock%}

@@ -10,7 +10,8 @@ from .mycode import GetImageColor, Recommendation
 #show crawling_data table info list
 def pic_list(request):
     # MyClass.print_something()
-    piclist = CrawlingData.objects.all()
+    # piclist = CrawlingData.objects.all() #django 명령어 사용
+    piclist = CrawlingData.objects.raw('SELECT * from crawling_data') #mysql query로 시도
     piclist = piclist[:20]
     return render(request,'upload/pic_list.html',{'pic_list':piclist})
 
@@ -27,6 +28,12 @@ def img_upload(request):
     else:
         form = ImageForm()
     return render(request, 'upload/img_upload.html', {'form': form})
+
+#check image kmeans result
+def img_kmeans(request,pk):
+    img_obj = get_object_or_404(Image,pk=pk) #방금 업로드한 이미지
+    GetImageColor(img_obj.image.url)
+    return render(request,'upload/img_kmeans.html',{'img_obj':img_obj,'color_info':'../../media/images/tempplot.png'})
 
 def comp_result(request,pk):
     image_uploaded = get_object_or_404(Image,pk=pk) #방금 업로드한 이미지의 pk에 맞는애의 name

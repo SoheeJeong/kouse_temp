@@ -25,10 +25,10 @@ class CrawlingData(models.Model):
         managed = False
         db_table = 'crawling_data'
 
-class Image(models.Model):
+class Image(models.Model): #table name: crawling_data
     title = models.CharField(max_length = 500)
     image = models.ImageField(upload_to='images')
     #user = models.CharField(max_length = 100)
 
-    def __str__(self):
+    def __str__(self): #자동으로 저장될 때 사용되는 callback (?)
         return self.title

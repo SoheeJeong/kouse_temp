@@ -77,9 +77,9 @@ WSGI_APPLICATION = 'tempsite.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'crawling_data',
+        'NAME': 'crawling_data', #database name
         'USER': 'root',
-        'PASSWORD': '102938gogo',
+        'PASSWORD': '102938gogo', #접속 비밀번호
         'HOST':'localhost',
         'PORT': '3306'
     }

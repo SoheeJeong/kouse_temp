@@ -3,7 +3,6 @@ import matplotlib.image as mpimg
 import numpy as np
 import cv2
 from sklearn.cluster import KMeans
-import matplotlib.pyplot as plt
 from PIL import Image
 import colorsys
 import os
@@ -17,6 +16,7 @@ class GetImageColor():
 
     def getClt(self):
         image = cv2.imread(os.path.join("."+self.imgurl))
+        print(self.imgurl)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image = image.reshape((image.shape[0] * image.shape[1], 3)) # height, width 통합
 
