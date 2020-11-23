@@ -1,8 +1,10 @@
+#backend.py 역할
+
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import numpy as np
 import cv2
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, MeanShift, estimate_bandwidth
 from PIL import Image
 import colorsys
 import os
@@ -13,12 +15,26 @@ class GetImageColor():
     def __init__(self,imgurl): 
         self.imgurl = imgurl
         print(self.imgurl)
-
-    def getClt(self):
+    
+    #이미지 로드, 전처리
+    def preprocess_image(self):
+        #load image
         image = cv2.imread(os.path.join("."+self.imgurl))
-        print(self.imgurl)
+        # resize (비율은 유지하면서 픽셀수는 128*128 로)
+        scale_percent = (image.shape[0] * image.shape[1]) / (128*128) # percent of original size
+        width = int(image.shape[1] / np.sqrt(scale_percent))
+        height = int(image.shape[0] / np.sqrt(scale_percent))
+        dim = (width, height) #비율 유지 모드
+        image = cv2.resize(image, dim, interpolation = cv2.INTER_AREA)
+        #rgb mode
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        #reshape
         image = image.reshape((image.shape[0] * image.shape[1], 3)) # height, width 통합
+        return image
+
+    #Kmeans clustering
+    def get_kmeans(self):
+        image = self.preprocess_image()
 
         #5개의 대표 색상 추출
         k = 5
@@ -27,6 +43,28 @@ class GetImageColor():
         # print(image.shape)
         self.centeroid_histogram(clt)
         return clt
+    
+    # MeanShift Clustering
+    def get_meanshift(self):
+        image = self.preprocess_image()
+
+        bandwidth = estimate_bandwidth(image, quantile=0.1, n_samples=200) #128*128에 이 파라미터가 적절한듯(조정)
+        print(bandwidth)
+        ms = MeanShift(bandwidth=bandwidth, bin_seeding=True)
+        ms.fit(image)
+        
+        self.centeroid_histogram(ms)
+        '''
+        self.labels = ms.labels_
+        self.cluster_centers = ms.cluster_centers_
+
+        self.labels_unique = np.unique(self.labels)
+        self.n_clusters_ = len(self.labels_unique)
+
+        print("number of estimated clusters : %d" % self.n_clusters_)
+        '''
+        return ms
+    
 
     def centeroid_histogram(self,clt):
         numLabels = np.arange(0, len(np.unique(clt.labels_)) + 1)
@@ -50,6 +88,7 @@ class GetImageColor():
         plt.savefig('./media/images/tempplot.png')
         return bar
 
+
 class Recommendation():
     def __init__(self,clt,df):
         self.clt = clt
@@ -62,7 +101,7 @@ class Recommendation():
         v *= 100
         return h, s, v
 
-    def recommend(self): #getClt의 output
+    def recommend(self): #getKmeans의 output
         df = self.df
         keyDict = {'title','imageurl'}
         df_analog = dict([(key, []) for key in keyDict])
@@ -161,59 +200,3 @@ class Recommendation():
                 # print('mono',idx)
         return roomcolor_analog, roomcolor_compl, roomcolor_mono
     
-    # def analog_result(self,df_analog,df_compl,df_mono):
-    #     df = self.df
-    #     analog_img_bytes = []
-    #     print("유사색 출력 갯수 : ", len(df_analog['title']))
-    #     print("유사색의 명화 추천 : ")
-    #     for i in range(0,len(df_analog)):
-    #         try:
-    #             title = df_analog[i]['title'] 
-    #             imageurl = df_analog[i]['imageurl'] 
-    #             print('title:',title,'imageurl: ',imageurl)
-    #             response = requests.get(imageurl)
-    #             image_bytes = BytesIO(response.content)
-    #             analog_img_bytes.append(image_bytes)
-    #             img = Image.open(image_bytes)
-    #             img.show()
-    #         except:
-    #             None
-    #     print("="*50)
-    #     return analog_img_bytes
-
-    # def compl_result(self,df_compl):
-    #     df = self.df
-    #     compl_img_bytes = []
-    #     print("\n보색의 명화 추천 : ")
-    #     for i in range(0,len(df_compl)):
-    #         try:
-    #             title = df_compl[i]['title'] 
-    #             imageurl = df_compl[i]['imageurl'] 
-    #             print('title:',title,'imageurl: ',imageurl)
-    #             response = requests.get(imageurl)
-    #             image_bytes = BytesIO(response.content)
-    #             compl_img_bytes.append(image_bytes)
-    #             # img = Image.open(compl_img_bytes)
-    #             # img.show()
-    #         except:
-    #             None
-    #     print("="*50)
-    #     return compl_img_bytes
-
-    # def mono_result(self,df_mono):
-    #     df = self.df
-    #     mono_img_bytes = []
-    #     print("\n단색의 명화 추천 : ")
-    #     for i in range(0,len(df_mono)):
-    #         try:
-    #             title = df_mono[i]['title'] 
-    #             imageurl = df_mono[i]['imageurl'] 
-    #             print('title:',title,'imageurl: ',imageurl)
-    #             response = requests.get(imageurl)
-    #             image_bytes = BytesIO(response.content)
-    #             mono_img_bytes.append(image_bytes)
-    #             # img = Image.open(mono_img_bytes)
-    #             # img.show()
-    #         except:
-    #             None
-    #     return mono_img_bytes

@@ -1,3 +1,5 @@
+#app.py 역할
+
 from django.shortcuts import render
 # from django.contrib.auth.decorators import login_required #보안강화
 from django.shortcuts import render, get_object_or_404, redirect
@@ -33,17 +35,19 @@ def img_upload(request):
 def img_kmeans(request,pk):
     img_obj = get_object_or_404(Image,pk=pk) #방금 업로드한 이미지
     GetImageColor(img_obj.image.url)
-    return render(request,'upload/img_kmeans.html',{'img_obj':img_obj,'color_info':'../../media/images/tempplot.png'})
+    return render(request,'upload/img_kmeans.html',{'img_obj':img_obj,'color_info':'/media/images/tempplot.png'})
 
 def comp_result(request,pk):
     image_uploaded = get_object_or_404(Image,pk=pk) #방금 업로드한 이미지의 pk에 맞는애의 name
     df = CrawlingData.objects.all()
 
     temp1 = GetImageColor(image_uploaded.image.url)
-    clt = temp1.getClt() #room color clt
+    
+    #clt = temp1.get_kmeans() #room color clt with kmeans
+    clt = temp1.get_meanshift() #room color clt with meanshift
     
     temp2 = Recommendation(clt,df)
     analog,comp,mono = temp2.recommend() #recommended images list
     # analog_imgs = temp2.analog_result(analog,comp,mono) #show recommended images
-    return render(request,'upload/comp_result.html',{'img_info':image_uploaded,'color_info':'../../media/images/tempplot.png','analog':analog,'comp':comp,'mono':mono,
+    return render(request,'upload/comp_result.html',{'img_info':image_uploaded,'color_info':'/media/images/tempplot.png','analog':analog,'comp':comp,'mono':mono,
                             'analogimg':analog['imageurl'],'compimg':comp['imageurl'],'monoimg':mono['imageurl']})
