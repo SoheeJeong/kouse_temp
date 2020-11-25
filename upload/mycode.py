@@ -10,6 +10,7 @@ import colorsys
 import os
 from io import BytesIO
 from django.contrib.sites import requests
+from django.conf import settings
 
 class GetImageColor():
     def __init__(self,imgurl): 
@@ -20,19 +21,33 @@ class GetImageColor():
     def preprocess_image(self):
         #load image
         image = cv2.imread(os.path.join("."+self.imgurl))
-        # resize (비율은 유지하면서 픽셀수는 128*128 로)
+        ## 밝기조절
+        val=10
+        array=np.full(image.shape,(val,val,val),dtype=np.uint8)
+        image=cv2.add(image,array)
+        
+        ## rgb mode
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) 
+
+        ## 선명하게
+        # 커널 생성(대상이 있는 픽셀을 강조)
+        kernel = np.array([[0, -1, 0],
+                        [-1, 5, -1],
+                        [0, -1, 0]])
+        # 커널 적용 
+        image = cv2.filter2D(image, -1, kernel)
+       
+        ## resize (비율은 유지하면서 픽셀수는 128*128 로)
         scale_percent = (image.shape[0] * image.shape[1]) / (128*128) # percent of original size
         width = int(image.shape[1] / np.sqrt(scale_percent))
         height = int(image.shape[0] / np.sqrt(scale_percent))
         dim = (width, height) #비율 유지 모드
-        image = cv2.resize(image, dim, interpolation = cv2.INTER_AREA)
-        #rgb mode
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = cv2.resize(image, dim, interpolation = cv2.INTER_AREA)   
         #reshape
         image = image.reshape((image.shape[0] * image.shape[1], 3)) # height, width 통합
         return image
 
-    #Kmeans clustering
+    # Kmeans clustering
     def get_kmeans(self):
         image = self.preprocess_image()
 
@@ -64,11 +79,10 @@ class GetImageColor():
         print("number of estimated clusters : %d" % self.n_clusters_)
         '''
         return ms
-    
 
     def centeroid_histogram(self,clt):
-        numLabels = np.arange(0, len(np.unique(clt.labels_)) + 1)
-        (hist, _) = np.histogram(clt.labels_, bins=numLabels)
+        num_labels = np.arange(0, len(np.unique(clt.labels_)) + 1)
+        (hist, _) = np.histogram(clt.labels_, bins=num_labels)
         hist = hist.astype("float")
         hist /= hist.sum()
         # print(hist)
@@ -85,7 +99,7 @@ class GetImageColor():
         plt.figure()
         plt.axis('on')
         plt.imshow(bar)
-        plt.savefig('./media/images/tempplot.png')
+        plt.savefig(settings.MEDIA_ROOT+'images/colorplot.png')
         return bar
 
 
@@ -101,12 +115,12 @@ class Recommendation():
         v *= 100
         return h, s, v
 
-    def recommend(self): #getKmeans의 output
+    def recommend_pic(self): #getKmeans의 output
         df = self.df
-        keyDict = {'title','imageurl'}
-        df_analog = dict([(key, []) for key in keyDict])
-        df_compl = dict([(key, []) for key in keyDict])
-        df_mono = dict([(key, []) for key in keyDict])
+        key_dict = {'title','imageurl'}
+        df_analog = dict([(key, []) for key in key_dict])
+        df_compl = dict([(key, []) for key in key_dict])
+        df_mono = dict([(key, []) for key in key_dict])
 
         for i in range(1,4): 
             for center in self.clt.cluster_centers_:
