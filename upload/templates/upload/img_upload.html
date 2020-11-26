@@ -9,7 +9,7 @@
     {% if img_obj %}
         <h3>Successfully uploaded : {{img_obj.title}}</h3>
         <img src="{{ img_obj.image.url}}" alt="connect" style="max-height:300px">
-        <a href="{% url 'img_kmeans' pk=img_obj.pk %}">kmeans 결과 보기</a>
+        <a href="{% url 'img_clustering' pk=img_obj.pk %}">clustering 결과 보기</a>
         <h2><a href="{% url 'comp_result' pk=img_obj.pk %}">image 추천 결과 보기</a>
     {% endif %}
 {%endblock%}

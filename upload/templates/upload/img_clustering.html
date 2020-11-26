@@ -1,0 +1,10 @@
+{% extends 'upload/base.html' %}
+
+{%block content%}
+    {% if result.pk %}
+        <p>{{result.title}}</p>
+        <img src="{{ result.imgurl }}" alt="connect" style="max-height:300px">
+        <h3>clustering result</h3>
+        <img src="{{ result.color_info }}" alt="kmeans" style="max-height:300px">
+    {% endif %}
+{%endblock%}

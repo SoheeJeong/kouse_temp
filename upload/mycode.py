@@ -13,9 +13,9 @@ from django.contrib.sites import requests
 from django.conf import settings
 
 class GetImageColor():
-    def __init__(self,imgurl): 
+    def __init__(self,imgurl,title): 
         self.imgurl = imgurl
-        print(self.imgurl)
+        self.imgtitle = title
     
     #이미지 로드, 전처리
     def preprocess_image(self):
@@ -99,7 +99,7 @@ class GetImageColor():
         plt.figure()
         plt.axis('on')
         plt.imshow(bar)
-        plt.savefig(settings.MEDIA_ROOT+'images/colorplot.png')
+        plt.savefig(settings.MEDIA_ROOT+self.imgtitle+'_cluster_result.png')
         return bar
 
 

@@ -5,18 +5,35 @@ from django.conf import settings
 # from django.contrib.auth.decorators import login_required #보안강화
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
+from django.db import DatabaseError, connection
+from upload import models
 from .models import CrawlingData, Image
 from .forms import CrawlingDataForm, ImageForm
 from .mycode import GetImageColor, Recommendation
 
 # Create your views here.
+
+#get query result
+def get_sql_query_result(sql,param=None):
+    with connection.cursor() as cursor:
+        #sql문 실행
+        if not param:
+            cursor.execute(sql) #no parameter
+        else:
+            cursor.execute(sql,(param))
+        #sql 실행결과 반환
+        result = cursor.fetchall()
+    return result
+
 #show crawling_data table info list
 def pic_list(request):
-    # MyClass.print_something()
-    # piclist = CrawlingData.objects.all() #django 명령어 사용
-    piclist = CrawlingData.objects.raw('SELECT * from crawling_data') #mysql query로 시도
+    # piclist = CrawlingData.objects.raw('SELECT * from crawling_data') #mysql query로 시도
+    piclist = get_sql_query_result('SELECT artist,title,h1,s1,v1,imageurl from crawling_data')
     piclist = piclist[:20]
-    return render(request,'upload/pic_list.html',{'pic_list':piclist})
+    result=[]
+    for p in piclist:
+        result.append({'artist':p[0],'title':p[1],'h1':p[2],'s1':p[3],'v1':p[4],'imageurl':p[5]})
+    return render(request,'upload/pic_list.html',{'pic_list':result})
 
 #user upload image
 def img_upload(request):
@@ -32,22 +49,50 @@ def img_upload(request):
         form = ImageForm()
     return render(request, 'upload/img_upload.html', {'form': form})
 
-#check image kmeans result
-def img_kmeans(request,pk):
-    img_obj = get_object_or_404(Image,pk=pk) #방금 업로드한 이미지
-    GetImageColor(img_obj.image.url)
-    return render(request,'upload/img_kmeans.html',{'img_obj':img_obj,'color_info':settings.MEDIA_URL+'images/colorplot.png'})
+#check image clustering result
+def img_clustering(request,pk):
+    # pk = request.GET.get("pk",None) 
+
+    img_obj = get_sql_query_result('SELECT id, title, image from upload_image WHERE id=%s',pk)    
+    image = img_obj[0]
+
+    GetImageColor(settings.MEDIA_URL+image[2],image[2]).get_meanshift()
+
+    result = {
+        'pk':image[0],
+        'title':image[1],
+        'imgurl':settings.MEDIA_URL+image[2],
+        'color_info':settings.MEDIA_URL+image[2]+'_cluster_result.png',
+    }
+    return render(request,'upload/img_clustering.html',{'result':result})
 
 def comp_result(request,pk):
-    image_uploaded = get_object_or_404(Image,pk=pk) #방금 업로드한 이미지의 pk에 맞는애의 name
-    df = CrawlingData.objects.all()
+    # pk = request.GET.get("pk",None) 
 
-    temp1 = GetImageColor(image_uploaded.image.url)
+    df = CrawlingData.objects.all()
     
-    #clt = temp1.get_kmeans() #room color clt with kmeans
-    clt = temp1.get_meanshift() #room color clt with meanshift
+    #image_uploaded = get_object_or_404(Image,pk=pk) #방금 업로드한 이미지의 pk에 맞는애의 name
+    image_uploaded = get_sql_query_result('SELECT id, title, image from upload_image WHERE id=%s',pk) 
+    image = image_uploaded[0]
     
-    temp2 = Recommendation(clt,df)
-    analog,comp,mono = temp2.recommend_pic() #recommended images list
-    return render(request,'upload/comp_result.html',{'img_info':image_uploaded,'color_info':settings.MEDIA_URL+'images/colorplot.png','analog':analog,'comp':comp,'mono':mono,
-                            'analogimg':analog['imageurl'],'compimg':comp['imageurl'],'monoimg':mono['imageurl']})
+    #clt = GetImageColor(image_uploaded.image.url).get_kmeans() #room color clt with kmeans
+    clt =  GetImageColor(settings.MEDIA_URL+image[2],image[1]).get_meanshift() #room color clt with meanshift
+    
+    
+
+    analog,comp,mono = Recommendation(clt,df).recommend_pic() #recommended images list
+
+    result = {
+        'img_info':{
+            'pk':image[0],
+            'title':image[1],
+            'imgurl':settings.MEDIA_URL+image[2],
+        },
+        'clustering_result':settings.MEDIA_URL+image[2]+'_cluster_result.png',
+        'recommend_result':{
+            'analog':analog['imageurl'],
+            'comp':comp['imageurl'],
+            'mono':mono['imageurl']   
+        }
+    }
+    return render(request,'upload/comp_result.html',{'result':result})

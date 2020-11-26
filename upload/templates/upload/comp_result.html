@@ -2,24 +2,23 @@
 
 {%block content%}
     <div class="post">
-        <h3>{{ img_info.title }}</h3>
-        <p>{{ img_info.image|linebreaksbr}}</p>
-        <img src = '{{img_info.image.url}}' width='300px'>
-        <img src = '{{color_info}}' width='300px'>
+        <h3>{{ result.img_info.title }}</h3>
+        <img src = '{{result.img_info.imgurl}}' width='300px'>
+        <img src = '{{result.clustering_result}}' width='300px'>
     </div>
     <div>
         <p>유사색 추천 결과 이미지: <br/>
-            {% for imgurl in analogimg %}
+            {% for imgurl in result.recommend_result.analog %}
                 <img src= {{imgurl}} width='100px'>
             {% endfor %}
         </p>
         <p>보색 추천 결과 이미지: <br/>
-            {% for imgurl in compimg %}
+            {% for imgurl in result.recommend_result.comp %}
                 <img src= {{imgurl}} width='100px'>
             {% endfor %}
         </p>
         <p>단색 추천 결과 이미지: <br/>
-            {% for imgurl in monoimg %}
+            {% for imgurl in result.recommend_result.mono %}
                 <img src= {{imgurl}} width='100px'>
             {% endfor %}
         </p>
