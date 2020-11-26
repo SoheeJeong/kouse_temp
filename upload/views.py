@@ -6,12 +6,14 @@ from django.conf import settings
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.db import DatabaseError, connection
+from django.http import HttpResponse, HttpResponseNotFound, JsonResponse
+
 from upload import models
+
 from .models import CrawlingData, Image
 from .forms import CrawlingDataForm, ImageForm
 from .mycode import GetImageColor, Recommendation
 
-# Create your views here.
 
 #get query result
 def get_sql_query_result(sql,param=None):
@@ -33,6 +35,8 @@ def pic_list(request):
     result=[]
     for p in piclist:
         result.append({'artist':p[0],'title':p[1],'h1':p[2],'s1':p[3],'v1':p[4],'imageurl':p[5]})
+    
+    # return JsonResponse(result)
     return render(request,'upload/pic_list.html',{'pic_list':result})
 
 #user upload image
@@ -47,6 +51,7 @@ def img_upload(request):
             return render(request, 'upload/img_upload.html', {'form': form, 'img_obj': img_obj})
     else:
         form = ImageForm()
+        
     return render(request, 'upload/img_upload.html', {'form': form})
 
 #check image clustering result
@@ -64,23 +69,24 @@ def img_clustering(request,pk):
         'imgurl':settings.MEDIA_URL+image[2],
         'color_info':settings.MEDIA_URL+image[2]+'_cluster_result.png',
     }
+
+    # return JsonResponse(result)
     return render(request,'upload/img_clustering.html',{'result':result})
 
 def comp_result(request,pk):
     # pk = request.GET.get("pk",None) 
 
-    df = CrawlingData.objects.all()
-    
+    #df = CrawlingData.objects.all()
+    pic_data = get_sql_query_result('SELECT * FROM crawling_data')
+   
     #image_uploaded = get_object_or_404(Image,pk=pk) #방금 업로드한 이미지의 pk에 맞는애의 name
     image_uploaded = get_sql_query_result('SELECT id, title, image from upload_image WHERE id=%s',pk) 
     image = image_uploaded[0]
     
-    #clt = GetImageColor(image_uploaded.image.url).get_kmeans() #room color clt with kmeans
+    #clt = GetImageColor(settings.MEDIA_URL+image[2],image[1]).get_kmeans() #room color clt with kmeans
     clt =  GetImageColor(settings.MEDIA_URL+image[2],image[1]).get_meanshift() #room color clt with meanshift
-    
-    
 
-    analog,comp,mono = Recommendation(clt,df).recommend_pic() #recommended images list
+    analog,comp,mono = Recommendation(clt,pic_data).recommend_pic() #recommended images list
 
     result = {
         'img_info':{
@@ -95,4 +101,7 @@ def comp_result(request,pk):
             'mono':mono['imageurl']   
         }
     }
+
+    # return JsonResponse(result)
     return render(request,'upload/comp_result.html',{'result':result})
+    

@@ -3,6 +3,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import numpy as np
+import pandas as pd
 import cv2
 from sklearn.cluster import KMeans, MeanShift, estimate_bandwidth
 from PIL import Image
@@ -104,9 +105,9 @@ class GetImageColor():
 
 
 class Recommendation():
-    def __init__(self,clt,df):
+    def __init__(self,clt,data):
         self.clt = clt
-        self.df = df # crawling data 전체 list
+        self.data = data # crawling data 전체 list
 
     def revised_rgb_to_hsv(self,r,g,b):
         (h, s, v) = colorsys.rgb_to_hsv(r/255, g/255, b/255)
@@ -116,101 +117,46 @@ class Recommendation():
         return h, s, v
 
     def recommend_pic(self): #getKmeans의 output
-        df = self.df
-        key_dict = {'title','imageurl'}
-        df_analog = dict([(key, []) for key in key_dict])
-        df_compl = dict([(key, []) for key in key_dict])
-        df_mono = dict([(key, []) for key in key_dict])
-
+        #convert tuple into dataframe
+        df = pd.DataFrame(self.data, columns =['id','artist','title','h1','s1','v1','h2','s2','v2','h3','s3','v3','imageurl'])
+        
         for i in range(1,4): 
             for center in self.clt.cluster_centers_:
                 h,s,v = Recommendation.revised_rgb_to_hsv(self,center[0],center[1],center[2])
                 h=int(h)
                 s=int(s)
                 v=int(v)
-                '''
-                비슷한 색감의 명화 추천
-                # roomcolor_analog(비슷한 색감) : h는 +-30도(!=0) (AND) s는동일 v는 +-5 
-                보색의 명화 추천
-                # roomcolor_compl(보색): h는 +-180도 (AND) s와v는 +-5
-                단색의 명화 추천
-                # roomcolor_mono(단색) : h는 동일 (AND) s는 +-10, v는 고려하지 않음
-                '''
-                roomcolor_analog= []
-                roomcolor_compl = []
-                roomcolor_mono = []
-                if i==1:
-                    roomcolor_analog, roomcolor_compl, roomcolor_mono= self.case1(df,h,s,v)
-                elif i==2:
-                    roomcolor_analog, roomcolor_compl, roomcolor_mono= self.case2(df,h,s,v)
-                else:
-                    roomcolor_analog, roomcolor_compl, roomcolor_mono= self.case3(df,h,s,v)
+
+                """
+                # 비슷한 색감의 명화 추천
+                roomcolor_analog(비슷한 색감) : h는 +-30도(!=0) (AND) s는동일 v는 +-5 
+                # 보색의 명화 추천
+                roomcolor_compl(보색): h는 +-180도 (AND) s와v는 +-5
+                # 단색의 명화 추천
+                roomcolor_mono(단색) : h는 동일 (AND) s는 +-10, v는 고려하지 않음
+                """
+                roomcolor_analog= (abs(df['h'+str(i)]-h)!=0)&(abs(df['h'+str(i)]-h)<=30)&(abs(df['s'+str(i)]-s)==0)&(abs(df['v'+str(i)]-v)<=5)
+                roomcolor_compl=(abs(df['h'+str(i)]-h)==180)&(abs(df['s'+str(i)]-s)<=5)&(abs(df['v'+str(i)]-v)<=5)
+                roomcolor_mono=(df['h'+str(i)]==h)&(abs(df['s'+str(i)]-s)<=10)
+
+                # 중복을 방지하기 위해 dictionary 로 바꿨다가 다시 list로 변환
+                df_analog, df_compl, df_mono = [],[],[]     
                 
-                for j in roomcolor_analog:
-                    if df[j].title not in df_analog['title']: #중복 제거 위한 if문
-                        df_analog['title'].append(df[j].title) #유사색-추천받은 명화 '제목' list형식으로 append
-                        df_analog['imageurl'].append(df[j].imageurl)
-                    # print("analog: ",df[j].title,"\n")
-                for j in roomcolor_compl:
-                    if df[j].title not in df_compl['title']: #중복 제거 위한 if문
-                        df_compl['title'].append(df[j].title)  #보색-추천받은 명화 '제목' list형식으로 append
-                        df_compl['imageurl'].append(df[j].imageurl) 
-                    # print("compl: ",df[j].title,"\n")
-                for j in roomcolor_mono:
-                    if df[j].title not in df_mono['title']: #중복 제거 위한 if문
-                        df_mono['title'].append(df[j].title)  #단색-추천받은 명화 '제목' list형식으로 append
-                        df_mono['imageurl'].append(df[j].imageurl) 
-                    # print("mono: ",df[j].title,"\n")
+                #유사색-추천받은 명화 list형식으로 append          
+                df_analog={
+                    'title': list( dict.fromkeys(df[roomcolor_analog]['title'].values,) ),
+                    'imageurl': list( dict.fromkeys(df[roomcolor_analog]['imageurl'].values,) )
+                    }  
+                #보색-추천받은 명화 list형식으로 append  
+                df_compl={
+                    'title': list( dict.fromkeys(df[roomcolor_compl]['title'].values,) ),
+                    'imageurl': list( dict.fromkeys(df[roomcolor_compl]['imageurl'].values,) )
+                    }
+                #단색-추천받은 명화 list형식으로 append  
+                df_mono={
+                    'title': list( dict.fromkeys(df[roomcolor_mono]['title'].values,) ),
+                    'imageurl': list( dict.fromkeys(df[roomcolor_mono]['imageurl'].values,) )
+                    }
+                
         return df_analog,df_compl,df_mono
-
-    def case1(self,df,h,s,v): #h1,s1,v1
-        roomcolor_analog= []
-        roomcolor_compl = []
-        roomcolor_mono = []
-
-        for idx in range(0,len(df)):
-            if (abs(df[idx].h1-h)!=0)&(abs(df[idx].h1-h)<=30)&(abs(df[idx].s1-s)==0)&(abs(df[idx].v1-v)<=5):
-                roomcolor_analog.append(idx)
-                # print('analog',idx)
-            if (abs(df[idx].h1-h)==180)&(abs(df[idx].s1-s)<=5)&(abs(df[idx].v1-v)<=5):
-                roomcolor_compl.append(idx)
-                # print('compl',idx)
-            if (df[idx].h1==h)&(abs(df[idx].s1-s)<=10):
-                roomcolor_mono.append(idx)
-                # print('mono',idx)
-        return roomcolor_analog, roomcolor_compl, roomcolor_mono
-
-    def case2(self,df,h,s,v): #h2,s2,v2
-        roomcolor_analog= []
-        roomcolor_compl = []
-        roomcolor_mono = []
-
-        for idx in range(0,len(df)):
-            if (abs(df[idx].h2-h)!=0)&(abs(df[idx].h2-h)<=30)&(abs(df[idx].s2-s)==0)&(abs(df[idx].v2-v)<=5):
-                roomcolor_analog.append(idx)
-                # print('analog',idx)
-            if (abs(df[idx].h2-h)==180)&(abs(df[idx].s2-s)<=5)&(abs(df[idx].v2-v)<=5):
-                roomcolor_compl.append(idx)
-                # print('compl',idx)
-            if (df[idx].h2==h)&(abs(df[idx].s2-s)<=10):
-                roomcolor_mono.append(idx)
-                # print('mono',idx)
-        return roomcolor_analog, roomcolor_compl, roomcolor_mono
-
-    def case3(self,df,h,s,v): #h3,s3,v3
-        roomcolor_analog= []
-        roomcolor_compl = []
-        roomcolor_mono = []
-
-        for idx in range(0,len(df)):
-            if (abs(df[idx].h3-h)!=0)&(abs(df[idx].h3-h)<=30)&(abs(df[idx].s3-s)==0)&(abs(df[idx].v3-v)<=5):
-                roomcolor_analog.append(idx)
-                # print('analog',idx)
-            if (abs(df[idx].h3-h)==180)&(abs(df[idx].s3-s)<=5)&(abs(df[idx].v3-v)<=5):
-                roomcolor_compl.append(idx)
-                # print('compl',idx)
-            if (df[idx].h3==h)&(abs(df[idx].s3-s)<=10):
-                roomcolor_mono.append(idx)
-                # print('mono',idx)
-        return roomcolor_analog, roomcolor_compl, roomcolor_mono
     
