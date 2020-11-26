@@ -84,7 +84,7 @@ def comp_result(request,pk):
     image = image_uploaded[0]
     
     #clt = GetImageColor(settings.MEDIA_URL+image[2],image[1]).get_kmeans() #room color clt with kmeans
-    clt =  GetImageColor(settings.MEDIA_URL+image[2],image[1]).get_meanshift() #room color clt with meanshift
+    clt =  GetImageColor(settings.MEDIA_URL+image[2],image[2]).get_meanshift() #room color clt with meanshift
 
     analog,comp,mono = Recommendation(clt,pic_data).recommend_pic() #recommended images list
 

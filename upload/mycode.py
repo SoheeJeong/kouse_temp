@@ -38,11 +38,12 @@ class GetImageColor():
         # 커널 적용 
         image = cv2.filter2D(image, -1, kernel)
        
-        ## resize (비율은 유지하면서 픽셀수는 128*128 로)
+        ## image w,h 구하기(픽셀수 128*128) 
         scale_percent = (image.shape[0] * image.shape[1]) / (128*128) # percent of original size
         width = int(image.shape[1] / np.sqrt(scale_percent))
         height = int(image.shape[0] / np.sqrt(scale_percent))
-        dim = (width, height) #비율 유지 모드
+        dim = (width, height) 
+        # resize: 비율은 유지하면서 픽셀수는 128*128 로
         image = cv2.resize(image, dim, interpolation = cv2.INTER_AREA)   
         #reshape
         image = image.reshape((image.shape[0] * image.shape[1], 3)) # height, width 통합
@@ -56,7 +57,6 @@ class GetImageColor():
         k = 5
         clt = KMeans(n_clusters = k)
         clt.fit(image)
-        # print(image.shape)
         self.centeroid_histogram(clt)
         return clt
     
@@ -70,15 +70,6 @@ class GetImageColor():
         ms.fit(image)
         
         self.centeroid_histogram(ms)
-        '''
-        self.labels = ms.labels_
-        self.cluster_centers = ms.cluster_centers_
-
-        self.labels_unique = np.unique(self.labels)
-        self.n_clusters_ = len(self.labels_unique)
-
-        print("number of estimated clusters : %d" % self.n_clusters_)
-        '''
         return ms
 
     def centeroid_histogram(self,clt):
@@ -86,17 +77,16 @@ class GetImageColor():
         (hist, _) = np.histogram(clt.labels_, bins=num_labels)
         hist = hist.astype("float")
         hist /= hist.sum()
-        # print(hist)
         self.plot_colors(hist,clt.cluster_centers_)
         return hist
 
     def plot_colors(self, hist, centroids):
         bar = np.zeros((50, 300, 3), dtype="uint8")
-        startX = 0
+        start_x = 0
         for (percent, color) in zip(hist, centroids):
-            endX = startX + (percent * 300)
-            cv2.rectangle(bar, (int(startX), 0), (int(endX), 50),color.astype("uint8").tolist(), -1)
-            startX = endX
+            end_x = start_x + (percent * 300)
+            cv2.rectangle(bar, (int(start_x), 0), (int(end_x), 50),color.astype("uint8").tolist(), -1)
+            start_x = end_x
         plt.figure()
         plt.axis('on')
         plt.imshow(bar)
@@ -141,7 +131,7 @@ class Recommendation():
 
                 # 중복을 방지하기 위해 dictionary 로 바꿨다가 다시 list로 변환
                 df_analog, df_compl, df_mono = [],[],[]     
-                
+
                 #유사색-추천받은 명화 list형식으로 append          
                 df_analog={
                     'title': list( dict.fromkeys(df[roomcolor_analog]['title'].values,) ),
